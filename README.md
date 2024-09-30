@@ -1,6 +1,6 @@
 # AWS Bedrock App: Using CloudFront APIGateway & Lamdba
 
-# Architecture Overview
+## Architecture Overview
 This project demonstrates a serverless architecture using AWS services to create an interactive AI chatbot. Here are a few key points about the architecture:
 
 
@@ -12,7 +12,7 @@ This project demonstrates a serverless architecture using AWS services to create
 - S3 Bucket : Hosts the static website files (HTML, CSS, JavaScript).
 - CloudFront : Serves as a content delivery network (CDN) to distribute the website globally with low latency.
 
-# Prerequisites
+## Prerequisites
 Before you begin, ensure you have the following:
 
 - AWS CLI 
@@ -26,13 +26,13 @@ Before you begin, ensure you have the following:
             - IAM (for creating roles)
             - Amazon Bedrock
 
-# Demo : 
-## Step 1: Clone GitHub Role: 
+## Demo : 
+### Step 1: Clone GitHub Role: 
 ```
 git clone https://github.com/rahulsing/aws-bedrock-cloudfront-apigateway-lambda-demo.git
 ```
 
-## Step 2: CloudFormation to create API Gateway and Lamdba Function Invoking Bedrock. 
+### Step 2: CloudFormation to create API Gateway and Lamdba Function Invoking Bedrock. 
 
 #### Create stack
 ```
@@ -68,7 +68,7 @@ Sample Output:
 ```
 - If face any issue, check the Lambda Log. 
 
-## Step 3: CloudFormation to host a web page on S3 to intract with API Gateway and access using  CloudFront
+### Step 3: CloudFormation to host a web page on S3 to intract with API Gateway and access using  CloudFront
 #### Create stack
 
 ```
@@ -84,7 +84,7 @@ aws cloudformation describe-stack-events --stack-name $SECOND_STACK --query "Sta
 - Wait for status to change to CREATE_COMPLETE
 
 
-## Step 4: Upload the index.html to S3 bucket
+### Step 4: Upload the index.html to S3 bucket
 #### Get the S3 Bucket to upload
 
 ```
@@ -134,7 +134,7 @@ echo $CloudFrontURL
 ![steamlitapp](https://github.com/rahulsing/aws-bedrock-cloudfront-apigateway-lambda-demo/blob/main/CloudFrontHosted.PNG?raw=true)
 
 
-## Clean up
+### Clean up
 
 #### Delete the second stack: 
 ```
