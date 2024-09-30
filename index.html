@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedrock AI Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+        }
+        #response {
+            white-space: pre-wrap;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bedrock AI Generator</h1>
+    <textarea id="input" placeholder="Enter your prompt here..."></textarea>
+    <br><br>
+    <button onclick="generateResponse()">Generate Response</button>
+    <br><br>
+    <div id="response"></div>
+
+    <script>
+        async function generateResponse() {
+            const input = document.getElementById('input').value;
+            const responseElement = document.getElementById('response');
+            responseElement.textContent = 'Generating...';
+            const API_GATEWAY_URL='https://jk8hu8ezg4.execute-api.us-west-2.amazonaws.com/prod/bedrock'
+            try {
+                const result = await fetch(API_GATEWAY_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: input }),
+                });
+
+                const data = await result.json();
+                console.log('API response:', data);
+
+                if (data.response && data.response.content) {
+                    const textContent = data.response.content
+                        .filter(item => item.type === 'text')
+                        .map(item => item.text)
+                        .join('\n');
+                    responseElement.textContent = textContent;
+                } else {
+                    responseElement.textContent = 'Unexpected response format';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                responseElement.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

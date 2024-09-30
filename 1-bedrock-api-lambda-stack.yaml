@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'API Gateway with Lambda integration to call Amazon Bedrock, with CORS enabled'
+
+Parameters:
+  BedrockModelId:
+    Type: String
+    Description: 'The ID of the Bedrock model to use'
+    Default: 'anthropic.claude-3-sonnet-20240229-v1:0'
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: BedrockInvokeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource: '*'
+
+  BedrockLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BedrockInvokeLambda
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+
+          def lambda_handler(event, context):
+              input_text = json.loads(event['body'])['input']
+              
+              bedrock_runtime = boto3.client('bedrock-runtime')
+              model_id = os.environ['MODEL_ID']
+              
+              messages=[{ "role":'user', "content":[{'type':'text','text':input_text}]}]
+
+              body=json.dumps(
+                      {
+                          "max_tokens": 512,
+                          "anthropic_version": "bedrock-2023-05-31",
+                          "messages": messages,
+                          "temperature": 0.5,
+                          "top_p": 1,
+                          "system": ''
+                      }  
+                  )  
+    
+              
+              try:
+
+                  response = bedrock_runtime.invoke_model(body=body, modelId=model_id)
+                  response_body = json.loads(response.get('body').read())
+                                    
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'OPTIONS,POST'
+                      },
+                      'body': json.dumps({'response': response_body})
+                  }
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'OPTIONS,POST'
+                      },
+                      'body': json.dumps({'error': str(e)})
+                  }
+      Runtime: python3.9
+      Timeout: 30
+      Environment:
+        Variables:
+          MODEL_ID: !Ref BedrockModelId
+
+  BedrockApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: BedrockAPI
+      Description: API for invoking Bedrock through Lambda
+
+  BedrockApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BedrockApi
+      ParentId: !GetAtt BedrockApi.RootResourceId
+      PathPart: bedrock
+
+  BedrockApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref BedrockApi
+      ResourceId: !Ref BedrockApiResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn: !GetAtt BedrockLambdaFunction.Arn
+
+  BedrockApiOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref BedrockApi
+      ResourceId: !Ref BedrockApiResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  BedrockApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: 
+      - BedrockApiMethod
+      - BedrockApiOptionsMethod
+    Properties:
+      RestApiId: !Ref BedrockApi
+      StageName: prod
+
+  LambdaApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt BedrockLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BedrockApi}/*/POST/bedrock
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${BedrockApi}.execute-api.${AWS::Region}.amazonaws.com/prod/bedrock"
