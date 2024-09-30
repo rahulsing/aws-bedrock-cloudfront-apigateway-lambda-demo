@@ -1,5 +1,32 @@
-# aws-bedrock-cloudfront-apigateway-lambda-demo
+# AWS Bedrock App: Using CloudFront APIGateway & Lamdba
 
+# Architecture Overview
+This project demonstrates a serverless architecture using AWS services to create an interactive AI chatbot. Here are a few key points about the architecture:
+
+
+![steamlitapp](https://github.com/rahulsing/aws-bedrock-cloudfront-apigateway-lambda-demo/blob/main/architecture.png?raw=true)
+
+- API Gateway : Acts as the entry point for requests, providing a RESTful API interface.
+- Lambda Function : Processes incoming requests from API Gateway and interacts with Amazon Bedrock.
+- Amazon Bedrock : Provides the AI/ML capabilities, specifically using the Claude model for natural language processing.
+- S3 Bucket : Hosts the static website files (HTML, CSS, JavaScript).
+- CloudFront : Serves as a content delivery network (CDN) to distribute the website globally with low latency.
+
+# Prerequisites
+Before you begin, ensure you have the following:
+
+- AWS CLI 
+- Amazon Bedrock Access : Ensure you have access to Amazon Bedrock in your AWS account. As of 2023, this might require requesting access from AWS.
+- IAM Permissions : Your AWS user should have permissions to create and manage the following services:
+            - CloudFormation
+            - Lambda
+            - API Gateway
+            - S3
+            - CloudFront
+            - IAM (for creating roles)
+            - Amazon Bedrock
+
+# Demo : 
 ## Step 1: Clone GitHub Role: 
 ```
 git clone https://github.com/rahulsing/aws-bedrock-cloudfront-apigateway-lambda-demo.git
