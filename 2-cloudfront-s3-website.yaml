@@ -65,3 +65,11 @@ Outputs:
   CloudFrontURL:
     Description: 'CloudFront Distribution Domain Name'
     Value: !GetAtt CloudFrontDistribution.DomainName
+
+  CloudFrontDistributionId:
+    Description: 'CloudFront Distribution ID'
+    Value: !Ref CloudFrontDistribution
+
+  S3BucketName:
+    Description: 'S3 Bucket Name'
+    Value: !Ref WebsiteBucket
