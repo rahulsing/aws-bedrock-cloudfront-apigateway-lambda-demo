@@ -138,6 +138,7 @@ echo $CloudFrontURL
 
 #### Delete the second stack: 
 ```
+aws s3 rm s3://$S3_BUCKET --recursive
 aws cloudformation delete-stack --stack-name $SECOND_STACK --region $AWS_REGION
 ```
 
