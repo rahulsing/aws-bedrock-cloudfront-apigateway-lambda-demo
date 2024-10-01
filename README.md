@@ -43,7 +43,7 @@ aws cloudformation create-stack --stack-name $FIRST_STACK --template-body file:/
 
 #### To check status: 
 ```
-aws cloudformation describe-stack-events --stack-name $SECOND_STACK --query "StackEvents[0]" --output table --region $AWS_REGION
+aws cloudformation describe-stack-events --stack-name $FIRST_STACK --query "StackEvents[0]" --output table --region $AWS_REGION
 ```
 
 - Wait for status to change to CREATE_COMPLETE
